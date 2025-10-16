@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 // Replace with your Groq API key
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_KEY = 'YOUR_GROQ_API_KEY_HERE';
 
 // Generate a secret word/object for guessing
 app.post('/api/generate', async (req, res) => {
@@ -17,15 +17,15 @@ app.post('/api/generate', async (req, res) => {
                 messages: [
                     {
                         role: 'system',
-                        content: 'You are a game host. Generate ONE random object, animal, or concept for players to guess. Respond with ONLY the word, nothing else.'
+                        content: 'You are a creative game host. Generate ONE completely random and unique item from ANY category: animals, objects, foods, places, professions, fictional characters, vehicles, sports, or abstract concepts. Be creative and varied! Respond with ONLY the single word or short phrase, nothing else. Examples: telescope, octopus, pizza, skyscraper, astronaut, Pikachu, submarine, basketball, happiness.'
                     },
                     {
                         role: 'user',
-                        content: 'Generate a random thing to guess'
+                        content: 'Generate something totally random and different from before: ' + Math.random()
                     }
                 ],
-                temperature: 1.2,
-                max_tokens: 20
+                temperature: 1.5,
+                max_tokens: 30
             },
             {
                 headers: {
