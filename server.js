@@ -5,10 +5,17 @@ const app = express();
 app.use(express.json());
 
 // Replace with your Groq API key
-const GROQ_API_KEY = 'YOUR_GROQ_API_KEY_HERE';
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 // Generate a secret word/object for guessing
 app.post('/api/generate', async (req, res) => {
+    const { category } = req.body;
+    
+    let categoryPrompt = '';
+    if (category && category !== 'random') {
+        categoryPrompt = ` from the category: ${category}`;
+    }
+    
     try {
         const response = await axios.post(
             'https://api.groq.com/openai/v1/chat/completions',
@@ -17,11 +24,11 @@ app.post('/api/generate', async (req, res) => {
                 messages: [
                     {
                         role: 'system',
-                        content: 'You are a creative game host. Generate ONE completely random and unique item from ANY category: animals, objects, foods, places, professions, fictional characters, vehicles, sports, or abstract concepts. Be creative and varied! Respond with ONLY the single word or short phrase, nothing else. Examples: telescope, octopus, pizza, skyscraper, astronaut, Pikachu, submarine, basketball, happiness.'
+                        content: 'You are a creative game host. Generate ONE completely random and unique item' + categoryPrompt + '. Be creative and varied! Respond with ONLY the single word or short phrase, nothing else.'
                     },
                     {
                         role: 'user',
-                        content: 'Generate something totally random and different from before: ' + Math.random()
+                        content: 'Generate something totally random and different: ' + Math.random()
                     }
                 ],
                 temperature: 1.5,
@@ -36,7 +43,7 @@ app.post('/api/generate', async (req, res) => {
         );
 
         const secret = response.data.choices[0].message.content.trim();
-        res.json({ secret: secret });
+        res.json({ secret: secret, category: category || 'random' });
     } catch (error) {
         console.error('Error:', error.response?.data || error.message);
         res.status(500).json({ error: 'Failed to generate secret' });
