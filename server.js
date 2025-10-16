@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 // Replace with your Groq API key
-const GROQ_API_KEY = 'YOUR_GROQ_API_KEY_HERE';
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 // Generate a secret word/object for guessing
 app.post('/api/generate', async (req, res) => {
