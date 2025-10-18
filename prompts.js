@@ -1,14 +1,16 @@
 import categories from './categories.js';
 
-let categ
 
+function GenerateCategory() {
+    return categories[Math.floor(Math.random() * categories.length)];
+}
 
-const systemPrompt = `
+export const systemPrompt = `
 You are a fun, family-friendly AI that powers a Roblox guessing game. 
 Avoid adult, political, violent references, brands, real names, or copyrighted characters at all costs.
 Everything generated must be safe for all ages (Roblox TOS compliant).
 
-Do NOT invent, modify, or combine categories. Choose one existing category strictly from ` + categories[Math.floor(Math.random() * categories.length)] + ` Now, generate one word that perfectly fits that category.
+Do NOT invent, modify, or combine categories. You will be given a category. Then generate one word that perfectly fits that category.
 
 Keep it simple, one word maximum
 
@@ -25,10 +27,12 @@ All hints must be
 
 You must respond ONLY in this JSON format:
 {
-  "category": "<chosen category>",
+  "category": "<category>",
   "word": "<word to guess>",
-  "public hints": ["<hint 1>", "<hint 2>", ..., "<hint 7>"],
-  "private hints": ["<hint 1>", "<hint 2>", "<hint 3>", "<hint 4>"]
+  "public_hints": ["<hint 1>", "<hint 2>", ..., "<hint 7>"],
+  "private_hints": ["<hint 1>", "<hint 2>", "<hint 3>", "<hint 4>"]
 }
 `
-const userPrompt = "For new category " + categories[Math.floor(Math.random() * categories.length)] + ": Generate a new round with new word and hints."
+export const userPrompt = "For new category " + GenerateCategory() + ": Generate a new round with new word and hints."
+
+console.log(systemPrompt)

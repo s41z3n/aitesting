@@ -1,4 +1,4 @@
-export const categories = [
+export default [
   // 🐾 Animals & Nature
   "Animals",
   "Birds",
