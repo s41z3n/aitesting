@@ -27,7 +27,7 @@ app.post('/api/generate', async (req, res) => {
                     }
                 ],
                 temperature: 1.5,
-                max_tokens: 2
+                max_tokens: 30
             },
             {
                 headers: {
@@ -36,7 +36,7 @@ app.post('/api/generate', async (req, res) => {
                 }
             }
         );
-
+        
         const secret = response.data.choices[0].message.content.trim();
         console.log(response)
         res.json(response)
