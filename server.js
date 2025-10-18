@@ -27,7 +27,7 @@ app.post('/api/generate', async (req, res) => {
                     }
                 ],
                 temperature: 1.5,
-                max_tokens: 100
+                max_tokens: 2
             },
             {
                 headers: {
@@ -38,7 +38,9 @@ app.post('/api/generate', async (req, res) => {
         );
 
         const secret = response.data.choices[0].message.content.trim();
-        res.json({ secret: secret, category: category, public_hints: public_hints[7], private_hints: private_hints[4] || 'error' });
+        console.log(response)
+        res.json(response)
+        //res.json({ secret: secret, category: category, public_hints: public_hints[7], private_hints: private_hints[4] || 'error' });
 
     } catch (error) {
         console.error('Error:', error.response?.data || error.message);
