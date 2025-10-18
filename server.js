@@ -39,10 +39,22 @@ app.post('/api/generate', async (req, res) => {
             }
         );
         
-        const secret = response.data.choices[0].message.content.trim();
-        console.log(response)
-        res.json(response)
-        //res.json({ secret: secret, category: category, public_hints: public_hints[7], private_hints: private_hints[4] || 'error' });
+        // 1. Extract the raw JSON string from the Groq API response
+        const rawJsonString = response.data.choices[0].message.content.trim();
+
+        // 2. Parse the JSON string into a JavaScript object
+        const groqData = JSON.parse(rawJsonString);
+
+        // 3. Map the data to the format your Roblox client expects
+        const finalClientResponse = {
+            category: groqData.category,
+            word: groqData.word,
+            public_hints: groqData.public_hints,
+            private_hints: groqData.private_hints,
+        };
+        
+        // 4. Send the clean data back to the client
+        res.json(finalClientResponse);
 
     } catch (error) {
         console.error('Error:', error.response?.data || error.message);
