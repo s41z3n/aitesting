@@ -39,8 +39,13 @@ app.post('/api/generate', async (req, res) => {
             }
         );
         
+        
         // 1. Extract the raw JSON string from the Groq API response
         const rawJsonString = response.data.choices[0].message.content.trim();
+        
+        console.log("--- RAW AI OUTPUT START ---");
+        console.log(rawJsonString);
+        console.log("--- RAW AI OUTPUT END ---");
 
         // 2. Parse the JSON string into a JavaScript object
         const groqData = JSON.parse(rawJsonString);

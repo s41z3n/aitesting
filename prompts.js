@@ -27,7 +27,7 @@ All hints must be
 - Written as short, clear sentences (max 10 words each)
 - Never include the word itself or synonyms that make it obvious
 
-You must respond ONLY in this JSON format:
+**You must respond ONLY in this JSON format**
 {
   "category": "<category>",
   "word": "<word to guess>",
