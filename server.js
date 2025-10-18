@@ -39,7 +39,7 @@ app.post('/api/generate', async (req, res) => {
 
         const secret = response.data.choices[0].message.content.trim();
         res.json({ secret: secret, category: category, public_hints: public_hints[7], private_hints: private_hints[4] || 'error' });
-        
+
     } catch (error) {
         console.error('Error:', error.response?.data || error.message);
         res.status(500).json({ error: 'Failed to generate secret' });
