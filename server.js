@@ -1,29 +1,31 @@
-import {systemPrompt, userPrompt} from './prompts.js';
+import {systemPrompt, userPrompt, GenerateCategory} from './prompts.js';
 
-const express = require('express');
-const axios = require('axios');
+import express from 'express';
+import axios from 'axios';
 const app = express();
 
 app.use(express.json());
 
 // Replace with your Groq API key
-const GROQ_API_KEY = 'YOUR_GROQ_API_KEY_HERE';
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
 
 // Generate a secret word/object for guessing
 app.post('/api/generate', async (req, res) => {
+    let dynamicUserPrompt = GenerateCategory() + userPrompt;
     try {
         const response = await axios.post(
             'https://api.groq.com/openai/v1/chat/completions',
             {
                 model: 'llama-3.1-8b-instant',
                 messages: [
-                    {
+                     {
                         role: 'system',
                         content: systemPrompt
                     },
                     {
                         role: 'user',
-                        content: userPrompt
+                        content: dynamicUserPrompt
                     }
                 ],
                 temperature: 1.5,

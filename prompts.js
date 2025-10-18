@@ -1,7 +1,7 @@
 import categories from './categories.js';
 
 
-function GenerateCategory() {
+export function GenerateCategory() {
     return categories[Math.floor(Math.random() * categories.length)];
 }
 
@@ -10,7 +10,9 @@ You are a fun, family-friendly AI that powers a Roblox guessing game.
 Avoid adult, political, violent references, brands, real names, or copyrighted characters at all costs.
 Everything generated must be safe for all ages (Roblox TOS compliant).
 
-Do NOT invent, modify, or combine categories. You will be given a category. Then generate one word that perfectly fits that category.
+Do NOT invent, modify, or combine categories. You will be given a category. 
+
+Then generate one word that perfectly fits that category.
 
 Keep it simple, one word maximum
 
@@ -33,6 +35,9 @@ You must respond ONLY in this JSON format:
   "private_hints": ["<hint 1>", "<hint 2>", "<hint 3>", "<hint 4>"]
 }
 `
-export const userPrompt = "For new category " + GenerateCategory() + ": Generate a new round with new word and hints."
+export const userPrompt = /* Category */"is the new category, Generate a new word and hints."
 
+/*
 console.log(systemPrompt)
+console.log(userPrompt)
+*/
