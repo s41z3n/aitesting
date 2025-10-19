@@ -1,25 +1,25 @@
-import {systemPrompt, userPrompt, GenerateCategory} from './prompts.js';
-
+import { systemPrompt, userPrompt, GenerateCategory } from './prompts.js';
 import express from 'express';
 import axios from 'axios';
-const app = express();
 
+const app = express();
 app.use(express.json());
 
-// Replace with your Groq API key
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-
-// Generate a secret word/object for guessing
 app.post('/api/generate', async (req, res) => {
-    let dynamicUserPrompt = GenerateCategory() + userPrompt;
+    const category = GenerateCategory();
+    const dynamicUserPrompt = userPrompt + category;
+    
+    console.log("🎲 Selected category:", category);
+    
     try {
         const response = await axios.post(
             'https://api.groq.com/openai/v1/chat/completions',
             {
                 model: 'llama-3.1-8b-instant',
                 messages: [
-                     {
+                    {
                         role: 'system',
                         content: systemPrompt
                     },
@@ -28,8 +28,8 @@ app.post('/api/generate', async (req, res) => {
                         content: dynamicUserPrompt
                     }
                 ],
-                temperature: 1.5,
-                max_tokens: 30
+                temperature: 1,
+                max_tokens: 200  // Increased for full JSON response
             },
             {
                 headers: {
@@ -39,18 +39,37 @@ app.post('/api/generate', async (req, res) => {
             }
         );
         
-        
-        // 1. Extract the raw JSON string from the Groq API response
-        const rawJsonString = response.data.choices[0].message.content.trim();
+        let rawJsonString = response.data.choices[0].message.content.trim();
         
         console.log("--- RAW AI OUTPUT START ---");
         console.log(rawJsonString);
         console.log("--- RAW AI OUTPUT END ---");
-
-        // 2. Parse the JSON string into a JavaScript object
+        
+        // Clean markdown formatting
+        rawJsonString = rawJsonString
+            .replace(/```json\s*/gi, '')
+            .replace(/```\s*/g, '')
+            .trim();
+        
+        console.log("--- CLEANED OUTPUT ---");
+        console.log(rawJsonString);
+        
+        // Parse JSON
         const groqData = JSON.parse(rawJsonString);
-
-        // 3. Map the data to the format your Roblox client expects
+        
+        // Validate structure
+        if (!groqData.word || !groqData.category || !groqData.public_hints || !groqData.private_hints) {
+            throw new Error('Missing required fields in AI response');
+        }
+        
+        if (!Array.isArray(groqData.public_hints) || groqData.public_hints.length !== 7) {
+            console.warn('⚠️ Expected 7 public hints, got', groqData.public_hints.length);
+        }
+        
+        if (!Array.isArray(groqData.private_hints) || groqData.private_hints.length !== 4) {
+            console.warn('⚠️ Expected 4 private hints, got', groqData.private_hints.length);
+        }
+        
         const finalClientResponse = {
             category: groqData.category,
             word: groqData.word,
@@ -58,21 +77,26 @@ app.post('/api/generate', async (req, res) => {
             private_hints: groqData.private_hints,
         };
         
-        // 4. Send the clean data back to the client
+        console.log("✅ Sending response to client");
         res.json(finalClientResponse);
-
-    } catch (error) {
-        console.error('Error:', error.response?.data || error.message);
-        res.status(500).json({ error: 'Failed to generate secret' });
+        
+    } catch (parseError) {
+        console.error('❌ Error:', parseError.message);
+        if (response && response.data) {
+            console.error('Raw API response:', response.data.choices[0].message.content);
+        }
+        res.status(500).json({ 
+            error: 'Failed to generate word', 
+            details: parseError.message 
+        });
     }
 });
 
-// Health check
 app.get('/', (req, res) => {
     res.json({ status: 'Server is running!' });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });

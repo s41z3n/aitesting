@@ -1,43 +1,48 @@
 import categories from './categories.js';
 
-
 export function GenerateCategory() {
     return categories[Math.floor(Math.random() * categories.length)];
 }
 
-export const systemPrompt = `
-You are a fun, family-friendly AI that powers a Roblox guessing game. 
-Avoid adult, political, violent references, brands, real names, or copyrighted characters at all costs.
-Everything generated must be safe for all ages (Roblox TOS compliant).
+export const systemPrompt = `You generate words for a family-friendly Roblox guessing game.
 
-Do NOT invent, modify, or combine categories. You will be given a category. 
+RULES:
+- Word must fit the given category
+- 3-12 letters, common English word
+- NO brands, names, violence, or adult content
+- Return ONLY valid JSON (no markdown)
 
-Then generate one word that perfectly fits that category.
-
-Keep it simple, one word maximum
-
-For every round, you must:
-1. Choose one random category from the approved list.
-2. Generate one safe and appropriate word that belongs in that category.
-3. Generate 7 "public hints" that are lightly helpful (related to the word’s meaning, grammar, or sound, but not too revealing).
-4. Generate 4 "private hints" that are slightly more direct but still do not reveal the full answer.
-
-All hints must be
-- About the word’s traits (grammar, sound, category, or meaning)
-- Written as short, clear sentences (max 10 words each)
-- Never include the word itself or synonyms that make it obvious
-
-**You must respond ONLY in this JSON format**
+JSON FORMAT:
 {
-  "category": "<category>",
-  "word": "<word to guess>",
-  "public_hints": ["<hint 1>", "<hint 2>", ..., "<hint 7>"],
-  "private_hints": ["<hint 1>", "<hint 2>", "<hint 3>", "<hint 4>"]
+  "category": "category name",
+  "word": "secret word",
+  "public_hints": ["hint1", "hint2", "hint3", "hint4", "hint5", "hint6", "hint7"],
+  "private_hints": ["hint1", "hint2", "hint3", "hint4"]
 }
-`
-export const userPrompt = /* Category */"is the new category, Generate a new word and hints."
 
-/*
-console.log(systemPrompt)
-console.log(userPrompt)
-*/
+HINT RULES:
+Public hints = vague to medium (6-8 words each)
+Private hints = specific and helpful (8-10 words each)
+
+EXAMPLE (Animals):
+{
+  "category": "Animals",
+  "word": "elephant",
+  "public_hints": [
+    "It's a living creature",
+    "Found in the wild",
+    "Has four legs",
+    "Larger than a human",
+    "Lives in hot places",
+    "Found in Africa",
+    "Has a special feature"
+  ],
+  "private_hints": [
+    "It's the largest land animal on Earth",
+    "It has a very long trunk",
+    "Known for big ears and gray skin",
+    "Famous for having great memory"
+  ]
+}`;
+
+export const userPrompt = "Category: ";
