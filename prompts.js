@@ -21,8 +21,11 @@ JSON FORMAT:
 }
 
 HINT RULES:
-Public hints = vague to medium (6-8 words each)
-Private hints = specific and helpful (8-10 words each)
+- About the word’s traits (grammar, sound, category, or meaning)
+- Do not have the word itself!
+
+Public hints = vague to medium
+Private hints = specific and helpful
 
 EXAMPLE (Animals):
 {
@@ -38,11 +41,11 @@ EXAMPLE (Animals):
     "Has a special feature"
   ],
   "private_hints": [
-    "It's the largest land animal on Earth",
-    "It has a very long trunk",
     "Known for big ears and gray skin",
-    "Famous for having great memory"
+    "Famous for having great memory",
+    "It's one of the largest land animals on Earth",
+    "It has a very long trunk",
   ]
 }`;
 
-export const userPrompt = "Category: ";
+export const userPrompt = "regenerate from Category: ";
