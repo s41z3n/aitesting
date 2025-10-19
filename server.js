@@ -7,29 +7,28 @@ app.use(express.json());
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
+if (!GROQ_API_KEY) {
+    console.error("❌ GROQ_API_KEY not set!");
+    process.exit(1);
+}
+
 app.post('/api/generate', async (req, res) => {
-    const category = GenerateCategory();
-    const dynamicUserPrompt = userPrompt + category;
-    
-    console.log("🎲 Selected category:", category);
+    let apiResponse = null;  // ✅ Declare outside try block
     
     try {
-        const response = await axios.post(
+        const category = GenerateCategory();
+        console.log("\n🎲 Category:", category);
+        
+        apiResponse = await axios.post(
             'https://api.groq.com/openai/v1/chat/completions',
             {
                 model: 'llama-3.1-8b-instant',
                 messages: [
-                    {
-                        role: 'system',
-                        content: systemPrompt
-                    },
-                    {
-                        role: 'user',
-                        content: dynamicUserPrompt
-                    }
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt + category }
                 ],
-                temperature: 1,
-                max_tokens: 200  // Increased for full JSON response
+                temperature: 1.3,
+                max_tokens: 200
             },
             {
                 headers: {
@@ -39,64 +38,125 @@ app.post('/api/generate', async (req, res) => {
             }
         );
         
-        let rawJsonString = response.data.choices[0].message.content.trim();
+        let raw = apiResponse.data.choices[0].message.content.trim();
+        console.log("📥 Raw:", raw);
         
-        console.log("--- RAW AI OUTPUT START ---");
-        console.log(rawJsonString);
-        console.log("--- RAW AI OUTPUT END ---");
-        
-        // Clean markdown formatting
-        rawJsonString = rawJsonString
-            .replace(/```json\s*/gi, '')
-            .replace(/```\s*/g, '')
+        // ✅ AGGRESSIVE CLEANING
+        raw = raw
+            .replace(/```json|```/g, '')  // Remove markdown
+            .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing commas before } or ]
             .trim();
         
-        console.log("--- CLEANED OUTPUT ---");
-        console.log(rawJsonString);
-        
-        // Parse JSON
-        const groqData = JSON.parse(rawJsonString);
-        
-        // Validate structure
-        if (!groqData.word || !groqData.category || !groqData.public_hints || !groqData.private_hints) {
-            throw new Error('Missing required fields in AI response');
+        // Extract JSON only
+        const start = raw.indexOf('{');
+        const end = raw.lastIndexOf('}') + 1;
+        if (start >= 0 && end > start) {
+            raw = raw.substring(start, end);
         }
         
-        if (!Array.isArray(groqData.public_hints) || groqData.public_hints.length !== 7) {
-            console.warn('⚠️ Expected 7 public hints, got', groqData.public_hints.length);
+        console.log("🧹 Cleaned:", raw);
+        
+        // ✅ SAFE JSON PARSE
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (jsonError) {
+            console.error("❌ JSON Parse Error:", jsonError.message);
+            console.error("Attempted to parse:", raw);
+            
+            // Return error but keep server running
+            return res.status(500).json({ 
+                error: 'AI returned invalid JSON',
+                details: jsonError.message,
+                raw: raw.substring(0, 200)  // First 200 chars for debugging
+            });
         }
         
-        if (!Array.isArray(groqData.private_hints) || groqData.private_hints.length !== 4) {
-            console.warn('⚠️ Expected 4 private hints, got', groqData.private_hints.length);
+        // ✅ VALIDATE STRUCTURE
+        if (!data.word || !data.category) {
+            throw new Error('Missing word or category');
         }
         
-        const finalClientResponse = {
-            category: groqData.category,
-            word: groqData.word,
-            public_hints: groqData.public_hints,
-            private_hints: groqData.private_hints,
-        };
-        
-        console.log("✅ Sending response to client");
-        res.json(finalClientResponse);
-        
-    } catch (parseError) {
-        console.error('❌ Error:', parseError.message);
-        if (response && response.data) {
-            console.error('Raw API response:', response.data.choices[0].message.content);
+        if (!Array.isArray(data.public_hints)) {
+            throw new Error('public_hints must be an array');
         }
+        
+        if (!Array.isArray(data.private_hints)) {
+            throw new Error('private_hints must be an array');
+        }
+        
+        // ✅ FIX HINT COUNTS
+        while (data.public_hints.length < 7) {
+            data.public_hints.push("Keep trying!");
+        }
+        if (data.public_hints.length > 7) {
+            data.public_hints = data.public_hints.slice(0, 7);
+        }
+        
+        while (data.private_hints.length < 4) {
+            data.private_hints.push("You're close!");
+        }
+        if (data.private_hints.length > 4) {
+            data.private_hints = data.private_hints.slice(0, 4);
+        }
+        
+        console.log("✅ Valid! Word:", data.word);
+        console.log("   Public hints:", data.public_hints.length);
+        console.log("   Private hints:", data.private_hints.length);
+        
+        // ✅ SEND RESPONSE
+        res.json({
+            category: data.category,
+            word: data.word,
+            public_hints: data.public_hints,
+            private_hints: data.private_hints
+        });
+        
+    } catch (error) {
+        console.error("❌ Error:", error.message);
+        
+        // ✅ SAFELY LOG API RESPONSE IF IT EXISTS
+        if (apiResponse && apiResponse.data) {
+            console.error("API Response:", apiResponse.data.choices[0].message.content.substring(0, 200));
+        }
+        
+        // ✅ KEEP SERVER RUNNING
         res.status(500).json({ 
-            error: 'Failed to generate word', 
-            details: parseError.message 
+            error: 'Failed to generate word',
+            message: error.message,
+            timestamp: new Date().toISOString()
         });
     }
 });
 
+// ✅ HEALTH CHECK
 app.get('/', (req, res) => {
-    res.json({ status: 'Server is running!' });
+    res.json({ 
+        status: 'Server is running!',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
+
+// ✅ CATCH ALL ERRORS (PREVENT CRASHES)
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ error: 'Internal server error' });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// ✅ HANDLE UNCAUGHT ERRORS (LAST RESORT)
+process.on('uncaughtException', (error) => {
+    console.error('💥 Uncaught Exception:', error);
+    // Don't exit, just log
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit, just log
 });
